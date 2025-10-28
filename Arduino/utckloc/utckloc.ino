@@ -32,8 +32,8 @@
 #define DEBUG    0
 #define AL_ADDR 0x48
 
-char ssid[] = "WifiName";            // your network SSID (name)
-char pass[] = "WifiPass";        // your network password
+char ssid[] = "SSID";            // your network SSID (name)
+char pass[] = "PASS";        // your network password
 
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
 
@@ -52,7 +52,10 @@ int UP_BT = 6;
 int DN_BT = 12;
 int SET_BT = 10;
 int mode = 0;
-int max_mode = 2;
+int max_mode = 3;
+const unsigned long birth_epoch = 849849600;
+const unsigned long eighty_years_in_seconds = 2524608000;
+
 // Settings for light sensitivity
 // Possible values: .125, .25, 1, 2
 // Both .125 and .25 should be used in most cases except darker rooms.
@@ -116,7 +119,7 @@ void setup()
   light.setIntegTime(time);
 
   UpdateBrightness();
-  String Bootscreen = " FRANCUBO    BOOTING   ";
+  String Bootscreen = "  UTC KLOCK";
   print2display(Bootscreen, false);
 
   WiFi.init(&Serial1);
@@ -151,6 +154,7 @@ void setup()
 
 void loop()
 {
+    checkDST();
     if(!digitalRead(UP_BT)){
       if(mode < max_mode) mode++;
       else mode = 0;
@@ -171,8 +175,61 @@ void loop()
       case 2:
         ShowTemp();
         break;
+      case 3:
+        ShowCountdown();
+        break;
     }
     UpdateBrightness();
+}
+
+int calculateDayOfWeek(int day, int month, int year) {
+  if (month < 3) {
+    month += 12;
+    year--;
+  }
+  int k = year % 100;
+  int j = year / 100;
+  int h = (day + 13 * (month + 1) / 5 + k + k / 4 + j / 4 + 5 * j) % 7;
+  // h = 0 for Saturday, 1 for Sunday, ..., 6 for Friday
+  // We need 0 for Sunday, 1 for Monday, ..., 6 for Saturday
+  return (h + 6) % 7;
+}
+
+void checkDST() {
+  int month = rtc.getMonth();
+  int day = rtc.getDay();
+  int year = rtc.getYear() + 2000;
+
+  // Last Sunday in March
+  int lastDayMarch = 31;
+  int lastSundayMarch = lastDayMarch - (calculateDayOfWeek(lastDayMarch, 3, year) % 7);
+  // Last Sunday in October
+  int lastDayOctober = 31;
+  int lastSundayOctober = lastDayOctober - (calculateDayOfWeek(lastDayOctober, 10, year) % 7);
+
+  if (month > 3 && month < 10) {
+    timezone = 2;
+  } else if (month == 3) {
+    if (day >= lastSundayMarch) {
+      timezone = 2;
+    } else {
+      timezone = 1;
+    }
+  } else if (month == 10) {
+    if (day < lastSundayOctober) {
+      timezone = 2;
+    } else {
+      timezone = 1;
+    }
+  } else {
+    timezone = 1;
+  }
+}
+
+void ShowCountdown(){
+  unsigned long current_epoch = rtc.getEpoch();
+  unsigned long remaining_seconds = eighty_years_in_seconds - (current_epoch - birth_epoch);
+  print2display("SECONDS LEFT " + String(remaining_seconds),false);
 }
 
 // send an NTP request to the time server at the given address
@@ -283,6 +340,10 @@ void UpdateBrightness(){
   }
 
 void ShowUTC(){
+    String TimeText = "";
+    String Millennium = "20";
+    String CommonEra = "AC";
+    String Timezone = "+2";
 
     TimeText += Millennium;
     TimeText += rtc.getYear();
@@ -294,10 +355,6 @@ void ShowUTC(){
     TimeText += "-";
     
     int day = rtc.getDay();
-    String TimeText = "";
-    String Millennium = "20";
-    String CommonEra = "AC";
-    String Timezone = "+2";
     if(day < 10) TimeText += 0;
     TimeText += day;
     TimeText += CommonEra;
@@ -334,7 +391,7 @@ void ShowUTC(){
 
 void ShowEpoch(){
 
-    print2display("             " + String(rtc.getEpoch()),false);
+    print2display("             " + String((unsigned long)rtc.getEpoch()),false);
     int hours = rtc.getHours();
     if(prevHours != hours){
       UpdateTime(timeServer);
@@ -403,6 +460,9 @@ void show_newmode(int Button){
           break;
         case 2:
           print2display("TEMPERATURE",false);
+          break;
+        case 3:
+          print2display("  COUNTDOWN  ",false);
           break;
       }
     }
