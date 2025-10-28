@@ -1,0 +1,102 @@
+$fn = 100;
+screwhight = 6.2;
+pcb_hight = 1.8;
+back_thinckness = 2;
+color([0.1, 0.4, 1])
+translate([2.6,7.5,9.8])
+import (file = "PCB.stl");
+
+
+union(){
+    difference(){
+        cube([132,99,screwhight+back_thinckness+pcb_hight]);
+        translate([2,7,7])
+        linear_extrude(height = 10, center = true)
+           scale([1.01,1.01,1])
+           import (file = "TimeKeeper.dxf", layer = "Mechanical6");
+        translate([46.5+2,4.5+7,-1])
+        cylinder(12,1,1);
+        translate([32.5+2,7+7,-1])
+        cylinder(12,1,1);
+        translate([32.5+2,15+7,-1])
+        cylinder(12,1,1);
+        // Spazi Viti
+        translate([21.1+2,-2+7.5,2+5])
+        cube([10,7,10],center = true);
+        
+        translate([107.1+2,-2+7.5,2+5])
+        cube([10,7,10],center = true);
+        
+        translate([21.1+2,+7.5+86.5,2+5])
+        cube([10,7,10],center = true);
+        
+        translate([107.1+2,+7.5+86.5,2+5])
+        cube([10,7,10],center = true);
+        // USB C
+        translate([128+2,+7+14.83+0.5,screwhight+back_thinckness-2])
+        cube([7,11,5.5],center = true);
+        
+        
+
+        
+    }
+    //viti
+    translate([21.1+2,+7+86.5,0])
+    difference(){
+        cylinder(screwhight+back_thinckness,3,3);
+        cylinder(10,1.4,1.4);
+    }
+    translate([21.1+2,-2+7.5,0])
+    difference(){
+        cylinder(screwhight+back_thinckness,3,3);
+        cylinder(10,1.4,1.4);
+    }
+    translate([107.1+2,-2+7.5,0])
+    difference(){
+        cylinder(screwhight+back_thinckness,3,3);
+        cylinder(10,1.4,1.4);
+    }
+    translate([107.1+2,+7+86.5,0])
+    difference(){
+        cylinder(screwhight+back_thinckness,3,3);
+        cylinder(10,1.4,1.4);
+    }
+    // Retro Simil dissipatore
+    difference(){
+        effect_deep = 8;
+        number_of_elements = 19;
+        effect_thickness = 2.5;
+        
+        for ( i = [0 : number_of_elements] ){
+                 translate([-1, ((99-effect_thickness)/number_of_elements)*i, -effect_deep+((effect_deep/number_of_elements)*i)])
+                cube([134,effect_thickness,effect_deep]);
+        }
+            cube([132,99,screwhight+back_thinckness+pcb_hight]);
+            translate([-5, 0, -10])
+            cube([5,99,20]);
+            translate([132, 0, -10])
+            cube([5,99,20]);
+            translate([46.5+2,4.5+7,-10])
+            cylinder(12,1,1);
+            translate([32.5+2,7+7,-10])
+            cylinder(12,1,1);
+            translate([32.5+2,15+7,-10])
+            cylinder(12,1,1);
+    }
+    // Fondo Angolato
+    difference(){
+        translate([0, 0, -10])
+        rotate(14.5, [1, 0, 0])
+        cube([132,5,22]);
+        translate([0, 0, -10])
+        cube([132,99,20]);
+        translate([0, -10, -8-5])
+        cube([132,10,5]);
+        translate([0, -10, screwhight+back_thinckness+pcb_hight])
+        cube([132,10,5]);
+        
+        
+    }
+    
+    
+}
